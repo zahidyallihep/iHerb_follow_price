@@ -162,6 +162,14 @@ def iherb_fiyat_cek(url):
             timeout=30
         )
 
+        print("HTTP:", response.status_code)
+print("FINAL URL:", response.url)
+print("HTML LENGTH:", len(response.text))
+print("CONTENT TYPE:", response.headers.get("content-type"))
+print("SERVER:", response.headers.get("server"))
+print("HTML START:")
+print(response.text[:2000])
+
         print(
             f"HTTP Durum Kodu: "
             f"{response.status_code}"
@@ -448,6 +456,11 @@ def iherb_fiyat_cek(url):
         print(
             "❌ Sayfada fiyat bulunamadı."
         )
+
+with open("debug_iherb.html", "w", encoding="utf-8") as f:
+    f.write(response.text)
+
+print("🧪 debug_iherb.html kaydedildi.")
 
         print(
             "HTML uzunluğu:",
