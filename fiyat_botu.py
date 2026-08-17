@@ -18,24 +18,27 @@ fiyat_dosyasi = "fiyatlar.txt"
 
 
 def iherb_fiyat_cek(url):
-  headers = {
-      "User-Agent": (
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-          " (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-      ),
-      "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
-  }
-  try:
-    response = requests.get(url, headers=headers, timeout=15)
-    if response.status_code == 200:
-      soup = BeautifulSoup(response.text, "html.parser")
-      meta = soup.find("meta", property="og:price:amount")
-      if meta and meta.get("content"):
-        return float(meta["content"])
-  except Exception as e:
-    print(f"Hata: {e}")
-  return None
-
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9", # İngilizce diline zorlayalım ki nokta(.) formatında gelsin
+    }
+    try:
+        response = requests.get(url, headers=headers, timeout=15)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, "html.parser")
+            # Hem meta etiketini dene hem de sitedeki ana fiyat alanını
+            meta_fiyat = soup.find("meta", property="og:price:amount")
+            if meta_fiyat and meta_fiyat.get("content"):
+                return float(meta_fiyat["content"])
+            
+            # Eğer meta boşsa fiyat alanını bul ve virgülü noktaya çevir
+            fiyat_str = soup.find("span", {"data-test-id": "pricing-curated-price"}).text
+            # "282,77 ₺" gibi bir metni "282.77" sayısına çeviriyoruz
+            fiyat_temiz = fiyat_str.replace("₺", "").replace(".", "").replace(",", ".").strip()
+            return float(fiyat_temiz)
+    except Exception as e:
+        print(f"Fiyat çekme hatası: {e}")
+    return None
 
 # Hafızayı oku
 gecmis = {}
