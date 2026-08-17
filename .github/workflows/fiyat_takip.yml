@@ -26,8 +26,11 @@ jobs:
       - name: Botu Calistir
         run: python fiyat_botu.py
 
-      - name: Sonuclari Otomatik Kaydet
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "Otomatik fiyat ve hafiza guncellendi"
-          file_pattern: "fiyatlar.txt urun_durum.json"
+      - name: Sonuclari Guvenli Kaydet ve Gonder
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull origin main --rebase
+          git add fiyatlar.txt urun_durum.json
+          git commit -m "Otomatik fiyat ve hafiza guncellendi" || echo "Degisiklik yok"
+          git push origin main
