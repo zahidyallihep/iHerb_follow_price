@@ -3,17 +3,20 @@ name: Fiyat Takip Otomasyonu
 on:
   schedule:
     - cron: '0 9 * * *' # Her gün sabah saat 09.00'da çalışır
-  workflow_dispatch: # İstersek elle de tetikleyebilelim diye
+  workflow_dispatch: # Elle tetiklenebilmesi için
+
+permissions:
+  contents: write # Botun dosyayı güncelleyip kaydetmesi için gerekli yetki
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
     steps:
       - name: Depoyu Indir
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Python Kurulumu
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
@@ -25,5 +28,5 @@ jobs:
           git config --global user.name "Fiyat Botu"
           git config --global user.email "bot@users.noreply.github.com"
           git add fiyatlar.txt
-          git commit -m "Otomatik fiyat kontrolu yapildi" || exit 0
-          git push
+          git commit -m "Otomatik fiyat kontrolu yapildi" || echo "Degisiklik yok"
+          git push || echo "Push yapilamadi"
