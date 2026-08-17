@@ -1,29 +1,26 @@
-name: Fiyat Takip Otomasyonu
+from datetime import datetime
+import os
 
-on:
-  schedule:
-    - cron: '0 9 * * *' # Her gün sabah saat 09.00'da çalışır
-  workflow_dispatch: # İstersek elle de tetikleyebilelim diye
+# Takip edilecek örnek ürünler
+urunler = [
+    {"isim": "Örnek Kulaklık", "hedef_fiyat": 500.0, "guncel_fiyat": 450.0},
+    {"isim": "Örnek Akıllı Saat", "hedef_fiyat": 2000.0, "guncel_fiyat": 2100.0},
+]
 
-jobs:
-  run-bot:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Depoyu Indir
-        uses: actions/checkout@v3
+dosya_adi = "fiyatlar.txt"
 
-      - name: Python Kurulumu
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
+print("Fiyat kontrolü başlatıldı...")
 
-      - name: Botu Calistir
-        run: python fiyat_botu.py
+# Dosya yoksa oluştur, varsa sonuna ekle
+with open(dosya_adi, "a", encoding="utf-8") as f:
+  for urun in urunler:
+    if urun["guncel_fiyat"] < urun["hedef_fiyat"]:
+      zaman = datetime.now().strftime("%Y-%m-%d %H:%M")
+      mesaj = (
+          f"[{zaman}] İNDİRİM! {urun['isim']} -> Hedef: {urun['hedef_fiyat']}"
+          f" TL, Şu an: {urun['guncel_fiyat']} TL\n"
+      )
+      f.write(mesaj)
+      print(f"✅ Kaydedildi: {mesaj}")
 
-      - name: Sonuclari Kaydet ve Guncelle
-        run: |
-          git config --global user.name "Fiyat Botu"
-          git config --global user.email "bot@users.noreply.github.com"
-          git add fiyatlar.txt
-          git commit -m "Otomatik fiyat kontrolu yapildi" || exit 0
-          git push
+print("Kontrol tamamlandı.")
