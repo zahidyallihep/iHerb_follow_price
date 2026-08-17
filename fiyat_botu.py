@@ -33,17 +33,15 @@ def iherb_fiyat_cek(url):
   }
   try:
     response = requests.get(url, headers=headers, timeout=15)
-    print(f"HTTP Durum Kodu: {response.status_code}")  # Loglarda görebilelim
+    print(f"HTTP Durum Kodu: {response.status_code}")
 
     if response.status_code == 200:
       soup = BeautifulSoup(response.text, "html.parser")
 
-      # 1. Yöntem: Meta etiketi
       meta_fiyat = soup.find("meta", property="og:price:amount")
       if meta_fiyat and meta_fiyat.get("content"):
         return float(meta_fiyat["content"])
 
-      # 2. Yöntem: Sitedeki olası fiyat elementleri
       fiyat_elementi = soup.find("span", class_="price") or soup.find(
           "span", {"data-test-id": "pricing-curated-price"}
       )
@@ -60,6 +58,8 @@ def iherb_fiyat_cek(url):
     print(f"Hata detayı: {e}")
 
   return None
+
+
 # Hafızayı oku
 gecmis = {}
 if os.path.exists(hafiza_dosyasi):
@@ -75,6 +75,7 @@ yeni_rapor = []
 for urun in urunler:
   fiyat = iherb_fiyat_cek(urun["url"])
   if fiyat is not None:
+    print(f"-> Güncel Fiyat: {fiyat} TL")
     isim = urun["isim"]
     if isim in gecmis:
       eski_fiyat = gecmis[isim]["fiyat"]
@@ -89,7 +90,6 @@ for urun in urunler:
   else:
     print(f"{urun['isim']} için fiyat çekilemedi.")
 
-# Dosyaları yaz
 with open(fiyat_dosyasi, "w", encoding="utf-8") as f:
   if yeni_rapor:
     f.write("\n".join(yeni_rapor) + "\n")
