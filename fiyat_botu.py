@@ -37,10 +37,7 @@ fiyat_dosyasi = "fiyatlar.txt"
 # ============================================================
 
 istanbul = ZoneInfo("Europe/Istanbul")
-
-bugun = datetime.now(
-    istanbul
-).strftime("%d.%m.%Y")
+bugun = datetime.now(istanbul).strftime("%d.%m.%Y")
 
 
 # ============================================================
@@ -54,7 +51,6 @@ def fiyat_sayiya_cevir(value):
 
     text = str(value).strip()
 
-    # Para işaretlerini ve gereksiz metni temizle
     text = (
         text
         .replace("TRY", "")
@@ -89,29 +85,21 @@ def fiyat_sayiya_cevir(value):
 
     else:
 
-        # 1299.90 gibi sayı için noktayı decimal kabul et.
-        # Birden fazla nokta varsa binlik ayracı olabilir.
+        # Birden fazla nokta varsa:
+        # 1.299.90 vb. yapıları normalize et.
         if temiz.count(".") > 1:
 
-            son_nokta =
-                temiz.rfind(".")
+            son_nokta = temiz.rfind(".")
 
             temiz = (
-                temiz[:son_nokta]
-                .replace(".", "")
-                +
-                temiz[son_nokta:]
+                temiz[:son_nokta].replace(".", "")
+                + temiz[son_nokta:]
             )
 
     try:
-
-        return round(
-            float(temiz),
-            2
-        )
+        return round(float(temiz), 2)
 
     except ValueError:
-
         return None
 
 
@@ -122,7 +110,6 @@ def fiyat_sayiya_cevir(value):
 def iherb_fiyat_cek(url):
 
     headers = {
-
         "User-Agent": (
             "Mozilla/5.0 "
             "(Windows NT 10.0; Win64; x64) "
@@ -144,14 +131,9 @@ def iherb_fiyat_cek(url):
         "Accept-Language":
             "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
 
-        "Cache-Control":
-            "no-cache",
-
-        "Pragma":
-            "no-cache",
-
-        "Upgrade-Insecure-Requests":
-            "1",
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache",
+        "Upgrade-Insecure-Requests": "1",
     }
 
     try:
@@ -162,25 +144,28 @@ def iherb_fiyat_cek(url):
             timeout=30
         )
 
+        # ====================================================
+        # DEBUG
+        # ====================================================
+
         print("HTTP:", response.status_code)
-print("FINAL URL:", response.url)
-print("HTML LENGTH:", len(response.text))
-print("CONTENT TYPE:", response.headers.get("content-type"))
-print("SERVER:", response.headers.get("server"))
-print("HTML START:")
-print(response.text[:2000])
-
+        print("FINAL URL:", response.url)
+        print("HTML LENGTH:", len(response.text))
         print(
-            f"HTTP Durum Kodu: "
-            f"{response.status_code}"
+            "CONTENT TYPE:",
+            response.headers.get("content-type")
         )
-
         print(
-            f"Gerçek URL: "
-            f"{response.url}"
+            "SERVER:",
+            response.headers.get("server")
         )
 
         if response.status_code != 200:
+
+            print(
+                "❌ HTTP isteği başarısız:",
+                response.status_code
+            )
 
             return None
 
@@ -192,11 +177,10 @@ print(response.text[:2000])
 
 
         # ====================================================
-        # 1. PRODUCT PRICE META
+        # 1. META FİYAT
         # ====================================================
 
         meta_arama = [
-
             (
                 "meta",
                 {
@@ -204,7 +188,6 @@ print(response.text[:2000])
                         "product:price:amount"
                 }
             ),
-
             (
                 "meta",
                 {
@@ -212,7 +195,6 @@ print(response.text[:2000])
                         "og:price:amount"
                 }
             ),
-
             (
                 "meta",
                 {
@@ -221,7 +203,6 @@ print(response.text[:2000])
                 }
             ),
         ]
-
 
         for tag_name, attrs in meta_arama:
 
@@ -239,10 +220,9 @@ print(response.text[:2000])
                 element.get("value")
             )
 
-            fiyat =
-                fiyat_sayiya_cevir(
-                    value
-                )
+            fiyat = fiyat_sayiya_cevir(
+                value
+            )
 
             if fiyat is not None:
 
@@ -263,19 +243,15 @@ print(response.text[:2000])
             type="application/ld+json"
         ):
 
-            raw =
-                script.string
+            raw = script.string
 
             if not raw:
                 continue
 
             try:
-
-                data =
-                    json.loads(raw)
+                data = json.loads(raw)
 
             except Exception:
-
                 continue
 
 
@@ -285,7 +261,6 @@ print(response.text[:2000])
                 else [data]
             )
 
-
             for obj in objects:
 
                 if not isinstance(
@@ -294,22 +269,18 @@ print(response.text[:2000])
                 ):
                     continue
 
-
-                offers =
-                    obj.get("offers")
-
+                offers = obj.get(
+                    "offers"
+                )
 
                 if isinstance(
                     offers,
                     dict
                 ):
 
-                    fiyat =
-                        fiyat_sayiya_cevir(
-                            offers.get(
-                                "price"
-                            )
-                        )
+                    fiyat = fiyat_sayiya_cevir(
+                        offers.get("price")
+                    )
 
                     if fiyat is not None:
 
@@ -334,12 +305,9 @@ print(response.text[:2000])
                         ):
                             continue
 
-                        fiyat =
-                            fiyat_sayiya_cevir(
-                                offer.get(
-                                    "price"
-                                )
-                            )
+                        fiyat = fiyat_sayiya_cevir(
+                            offer.get("price")
+                        )
 
                         if fiyat is not None:
 
@@ -352,31 +320,23 @@ print(response.text[:2000])
 
 
         # ====================================================
-        # 3. BİLİNEN FİYAT SELECTOR'LARI
+        # 3. BİLİNEN SELECTOR'LAR
         # ====================================================
 
         selectors = [
-
             '[data-test-id="pricing-curated-price"]',
-
             '[data-test-id="product-price"]',
-
             '.price',
-
             '.product-price',
-
             '.price-text',
-
             '[itemprop="price"]',
         ]
 
-
         for selector in selectors:
 
-            element =
-                soup.select_one(
-                    selector
-                )
+            element = soup.select_one(
+                selector
+            )
 
             if not element:
                 continue
@@ -390,10 +350,9 @@ print(response.text[:2000])
                 )
             )
 
-            fiyat =
-                fiyat_sayiya_cevir(
-                    value
-                )
+            fiyat = fiyat_sayiya_cevir(
+                value
+            )
 
             if fiyat is not None:
 
@@ -407,7 +366,7 @@ print(response.text[:2000])
 
 
         # ====================================================
-        # 4. HTML İÇİNDE TL FİYATI ARA
+        # 4. HTML İÇİNDE TL / ₺ ARA
         # ====================================================
 
         fiyat_adaylari = []
@@ -416,11 +375,10 @@ print(response.text[:2000])
             ["span", "div"]
         ):
 
-            text =
-                element.get_text(
-                    " ",
-                    strip=True
-                )
+            text = element.get_text(
+                " ",
+                strip=True
+            )
 
             if (
                 "₺" not in text
@@ -428,16 +386,14 @@ print(response.text[:2000])
             ):
                 continue
 
-            fiyat =
-                fiyat_sayiya_cevir(
-                    text
-                )
+            fiyat = fiyat_sayiya_cevir(
+                text
+            )
 
             if (
                 fiyat is not None
                 and fiyat > 0
             ):
-
                 fiyat_adaylari.append(
                     fiyat
                 )
@@ -453,23 +409,33 @@ print(response.text[:2000])
             return fiyat_adaylari[0]
 
 
+        # ====================================================
+        # FİYAT BULUNAMADI → DEBUG HTML KAYDET
+        # ====================================================
+
         print(
             "❌ Sayfada fiyat bulunamadı."
         )
 
-with open("debug_iherb.html", "w", encoding="utf-8") as f:
-    f.write(response.text)
-
-print("🧪 debug_iherb.html kaydedildi.")
-
         print(
-            "HTML uzunluğu:",
-            len(response.text)
+            "HTML başlangıcı:"
         )
 
         print(
-            "HTML başlangıcı:",
-            response.text[:500]
+            response.text[:2000]
+        )
+
+        with open(
+            "debug_iherb.html",
+            "w",
+            encoding="utf-8"
+        ) as f:
+            f.write(
+                response.text
+            )
+
+        print(
+            "🧪 debug_iherb.html kaydedildi."
         )
 
 
@@ -490,8 +456,9 @@ print("🧪 debug_iherb.html kaydedildi.")
 
 def fiyat_formatla(fiyat):
 
-    if float(fiyat).is_integer():
+    fiyat = float(fiyat)
 
+    if fiyat.is_integer():
         return str(
             int(fiyat)
         )
@@ -520,8 +487,9 @@ if os.path.exists(
             encoding="utf-8"
         ) as f:
 
-            gecmis =
-                json.load(f)
+            gecmis = json.load(
+                f
+            )
 
     except Exception as e:
 
@@ -542,8 +510,7 @@ yeni_rapor = []
 
 for urun in urunler:
 
-    isim =
-        urun["isim"]
+    isim = urun["isim"]
 
     print()
     print(
@@ -556,10 +523,9 @@ for urun in urunler:
     )
 
 
-    fiyat =
-        iherb_fiyat_cek(
-            urun["url"]
-        )
+    fiyat = iherb_fiyat_cek(
+        urun["url"]
+    )
 
 
     if fiyat is None:
@@ -569,10 +535,8 @@ for urun in urunler:
             "fiyat çekilemedi."
         )
 
-        # ÖNEMLİ:
-        # Fiyat çekilemezse eski hafızayı
-        # kesinlikle değiştirmiyoruz.
-
+        # Fiyat çekilemediyse önceki
+        # kayıt korunur.
         continue
 
 
@@ -583,18 +547,18 @@ for urun in urunler:
 
 
     # ========================================================
-    # ÖNCEKİ FİYAT VARSA KARŞILAŞTIR
+    # ÖNCEKİ FİYATLA KARŞILAŞTIR
     # ========================================================
 
     if isim in gecmis:
 
-        eski_fiyat =
-            float(
-                gecmis[isim]["fiyat"]
-            )
+        eski_fiyat = float(
+            gecmis[isim]["fiyat"]
+        )
 
-        eski_tarih =
-            gecmis[isim]["tarih"]
+        eski_tarih = gecmis[
+            isim
+        ]["tarih"]
 
 
         print(
@@ -609,10 +573,10 @@ for urun in urunler:
 
             indirim_orani = (
                 (
-                    eski_fiyat - fiyat
+                    eski_fiyat
+                    - fiyat
                 )
-                /
-                eski_fiyat
+                / eski_fiyat
             ) * 100
 
 
@@ -640,6 +604,23 @@ for urun in urunler:
             )
 
 
+        elif fiyat > eski_fiyat:
+
+            print(
+                "📈 Fiyat yükseldi:",
+                fiyat_formatla(eski_fiyat),
+                "→",
+                fiyat_formatla(fiyat)
+            )
+
+
+        else:
+
+            print(
+                "➖ Fiyat değişmedi."
+            )
+
+
     else:
 
         print(
@@ -648,16 +629,12 @@ for urun in urunler:
 
 
     # ========================================================
-    # HER BAŞARILI KONTROLDE SON FİYATI REFERANS YAP
+    # SON BAŞARILI FİYAT BİR SONRAKİ GÜNÜN REFERANSI
     # ========================================================
 
     gecmis[isim] = {
-
-        "fiyat":
-            fiyat,
-
-        "tarih":
-            bugun
+        "fiyat": fiyat,
+        "tarih": bugun
     }
 
 
